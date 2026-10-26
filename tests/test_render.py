@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 
 from matiz import animations, render, settings
@@ -77,12 +78,16 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(once, render.rofi_launcher(s, once))
         self.assertIn("columns: 6;", once)
 
-    def test_lock_screen_never_has_an_empty_cmd_label(self):
-        lock = render.hyprlock(defaults(lock={"name": "Ana"}))
-        self.assertIn('echo " "', lock)
-        self.assertIn("$name = Ana", lock)
-        self.assertIn("text = A\n", lock)
+    def test_lock_screen_has_no_shell_variables(self):
+        # hyprlock treats every $word as its own variable; only these exist
+        lock = render.hyprlock(defaults())
+        self.assertEqual(set(re.findall(r"\$[A-Za-z_]+", lock)), {"$TIME", "$font", "$fg", "$fg_dim", "$card"})
 
+    def test_lock_info_always_prints_something(self):
+        info = render.lock_info(defaults(lock={"name": "Ana"}))
+        self.assertTrue(info.startswith("#!/bin/sh"))
+        self.assertIn('name="Ana"', info)
+        self.assertIn("Digite a senha para desbloquear", info)
 
 if __name__ == "__main__":
     unittest.main()

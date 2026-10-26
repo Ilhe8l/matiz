@@ -196,20 +196,61 @@ def dunst(settings, current_text):
 """
 
 
+def lock_info(settings):
+    """Helper the lock screen calls for its dynamic lines. Shell logic lives here because
+    hyprlock reads any $word in its config as one of its own variables, and a label whose
+    text breaks, or comes out empty, is drawn as "Sample Text"."""
+    name = settings["lock"]["name"] or ""
+    return f"""#!/bin/sh
+# {HEADER}
+case "$1" in
+    greeting)
+        hour=$(date +%H)
+        if [ "$hour" -lt 12 ]; then greet="Bom dia"
+        elif [ "$hour" -lt 18 ]; then greet="Boa tarde"
+        else greet="Boa noite"; fi
+        name="{name}"
+        if [ -n "$name" ]; then echo "$greet, $name"; else echo "$greet"; fi
+        ;;
+    date)
+        LC_TIME=pt_BR.UTF-8 date +"%A, %d de %B"
+        ;;
+    media)
+        status=$(playerctl status 2>/dev/null)
+        title=$(playerctl metadata --format '{{{{ title }}}} · {{{{ artist }}}}' 2>/dev/null | cut -c1-60)
+        if [ -n "$title" ] && [ "$status" = Playing ]; then echo "\U000F03E4  $title"
+        elif [ -n "$title" ] && [ "$status" = Paused ]; then echo "\U000F040A  $title"
+        else echo "Digite a senha para desbloquear"; fi
+        ;;
+    battery)
+        bat=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1)
+        if [ -z "$bat" ]; then echo "\U000F06A5"; exit; fi
+        cap=$(cat "$bat/capacity"); state=$(cat "$bat/status")
+        if [ "$state" = Charging ]; then icon="\U000F0084"
+        elif [ "$cap" -ge 80 ]; then icon="\U000F0079"
+        elif [ "$cap" -ge 50 ]; then icon="\U000F0080"
+        elif [ "$cap" -ge 20 ]; then icon="\U000F007E"
+        else icon="\U000F007B"; fi
+        echo "$icon  $cap%"
+        ;;
+    *)
+        echo " "
+        ;;
+esac
+"""
+
+
 def hyprlock(settings):
     c, lock = colors(settings), settings["lock"]
-    name = lock["name"] or "Olá"
-    initial = name[0].upper()
     r, g, b = hex_to_rgb(c["accent"])
-    figure_space = " "  # an empty cmd label makes hyprlock print "Sample Text"
+    info = "~/.config/hypr/lock-info"
     return f"""# {HEADER}
+# Dynamic text comes from {info}; keep shell variables out of this file.
 
 $font = JetBrainsMono Nerd Font
 $fg = rgb({_bare(c['fg'])})
-$fg_dim = {rgba(c['fg'], 0.65)}
-$accent = rgb({_bare(c['accent'])})
-$card = {rgba(c['bg'], 0.55)}
-$name = {name}
+$fg_dim = {rgba(c['fg'], 0.7)}
+$card = {rgba(c['bg'], 0.5)}
 
 general {{
     hide_cursor = true
@@ -239,72 +280,47 @@ background {{
 
 label {{
     monitor =
-    text = cmd[update:1000] date +"%H:%M"
+    text = $TIME
     color = $fg
-    font_size = 120
-    font_family = $font ExtraBold
-    shadow_passes = 2
-    shadow_size = 6
-    position = 0, 260
-    halign = center
-    valign = center
-}}
-
-label {{
-    monitor =
-    text = cmd[update:60000] LC_TIME=pt_BR.UTF-8 date +"%A, %d de %B"
-    color = $fg_dim
-    font_size = 20
-    font_family = $font
-    position = 0, 160
-    halign = center
-    valign = center
-}}
-
-shape {{
-    monitor =
-    size = 96, 96
-    rounding = -1
-    color = $accent
-    border_size = 3
-    border_color = rgba({r}, {g}, {b}, 0.35)
-    position = 0, 30
-    halign = center
-    valign = center
-}}
-
-label {{
-    monitor =
-    text = {initial}
-    color = rgb({_bare(c['bg'])})
-    font_size = 40
-    font_family = $font ExtraBold
-    position = 0, 30
-    halign = center
-    valign = center
-}}
-
-label {{
-    monitor =
-    text = cmd[update:60000] h=$(date +%H); if [ $h -lt 12 ]; then g="Bom dia"; elif [ $h -lt 18 ]; then g="Boa tarde"; else g="Boa noite"; fi; echo "$g, $name"
-    color = $fg
-    font_size = 18
+    font_size = 110
     font_family = $font Bold
-    position = 0, -50
+    position = 0, 200
+    halign = center
+    valign = center
+}}
+
+label {{
+    monitor =
+    text = cmd[update:60000] {info} date
+    color = $fg_dim
+    font_size = 18
+    font_family = $font
+    position = 0, 100
+    halign = center
+    valign = center
+}}
+
+label {{
+    monitor =
+    text = cmd[update:60000] {info} greeting
+    color = $fg
+    font_size = 16
+    font_family = $font
+    position = 0, -20
     halign = center
     valign = center
 }}
 
 input-field {{
     monitor =
-    size = 300, 54
+    size = 300, 52
     outline_thickness = 2
-    dots_size = 0.25
-    dots_spacing = 0.35
+    dots_size = 0.22
+    dots_spacing = 0.4
     dots_center = true
     dots_rounding = -1
     rounding = -1
-    outer_color = rgba({r}, {g}, {b}, 0.6)
+    outer_color = rgba({r}, {g}, {b}, 0.55)
     inner_color = $card
     font_color = $fg
     font_family = $font
@@ -312,44 +328,33 @@ input-field {{
     fail_color = rgb({_bare(c['red'])})
     capslock_color = rgb({_bare(c['orange'])})
     fade_on_empty = false
-    placeholder_text = <span foreground="##{_bare(c['fg'])}99">\U000F033E  Senha</span>
-    fail_text = <i>$FAIL ($ATTEMPTS)</i>
+    placeholder_text = <span foreground="##{_bare(c['fg'])}88">Senha</span>
+    fail_text = Senha incorreta
     fail_transition = 300
-    position = 0, -130
+    position = 0, -90
     halign = center
     valign = center
 }}
 
 label {{
     monitor =
-    text = \U000F030C  $LAYOUT
-    color = $fg_dim
-    font_size = 13
-    font_family = $font
-    position = 30, 24
-    halign = left
-    valign = bottom
-}}
-
-label {{
-    monitor =
-    text = cmd[update:2000] m=$(playerctl metadata --format '{{{{ title }}}} · {{{{ artist }}}}' 2>/dev/null | cut -c1-60); s=$(playerctl status 2>/dev/null); if [ -n "$m" ] && [ "$s" != Stopped ]; then [ "$s" = Playing ] && i="\U000F03E4" || i="\U000F040A"; echo "$i  $m"; else echo "{figure_space}"; fi
+    text = cmd[update:2000] {info} media
     onclick = playerctl play-pause
     color = $fg_dim
-    font_size = 13
+    font_size = 12
     font_family = $font
-    position = 0, 24
+    position = 0, 28
     halign = center
     valign = bottom
 }}
 
 label {{
     monitor =
-    text = cmd[update:10000] c=$(cat /sys/class/power_supply/BAT*/capacity | head -1); s=$(cat /sys/class/power_supply/BAT*/status | head -1); i="\U000F0079"; [ $c -lt 80 ] && i="\U000F0080"; [ $c -lt 50 ] && i="\U000F007E"; [ $c -lt 20 ] && i="\U000F007B"; [ "$s" = Charging ] && i="\U000F0084"; echo "$i  $c%"
+    text = cmd[update:10000] {info} battery
     color = $fg_dim
-    font_size = 13
+    font_size = 12
     font_family = $font
-    position = -30, 24
+    position = -30, 28
     halign = right
     valign = bottom
 }}

@@ -20,6 +20,7 @@ TARGETS = [
     ("fuzzel", CONFIG / "fuzzel/fuzzel.ini", render.fuzzel, True),
     ("dunst", CONFIG / "dunst/dunstrc", render.dunst, True),
     ("hyprlock", CONFIG / "hypr/hyprlock.conf", render.hyprlock, False),
+    ("lock-info", CONFIG / "hypr/lock-info", render.lock_info, False),
     ("kitty", CONFIG / "kitty/matiz-colors.conf", render.kitty, False),
     ("qt6", CONFIG / "qt6ct/colors/Matiz.conf", render.qt_palette, False),
     ("qt5", CONFIG / "qt5ct/colors/Matiz.conf", render.qt_palette, False),
@@ -33,6 +34,8 @@ def _write(path, text):
         return False
     tmp = path.with_name(path.name + ".matiz-tmp")
     tmp.write_text(text)
+    if text.startswith("#!"):
+        tmp.chmod(0o755)
     tmp.replace(path)
     return True
 
