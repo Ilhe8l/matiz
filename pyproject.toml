@@ -1,0 +1,11 @@
+[project]
+name = "matiz"
+version = "0.1.0"
+description = "Theme a Hyprland desktop from one GTK app"
+readme = "README.md"
+requires-python = ">=3.10"
+# PyGObject comes from the system (python3-gi with GTK 4 and libadwaita typelibs)
+dependencies = []
+
+[project.scripts]
+matiz = "matiz.cli:main"

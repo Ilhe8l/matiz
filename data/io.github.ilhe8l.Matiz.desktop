@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Matiz
+GenericName=Personalização
+Comment=Cores, janelas, animações, barra e tela de bloqueio do Hyprland
+Exec=@BIN@/matiz
+Icon=preferences-desktop-theme
+Categories=Settings;DesktopSettings;GTK;
+Keywords=tema;cores;hyprland;waybar;rofi;personalizar;
+StartupNotify=true
