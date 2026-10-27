@@ -107,8 +107,13 @@ def reload(changed):
     in_hyprland = bool(os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"))
     if in_hyprland and "hyprland" in changed:
         _run("hyprctl", "reload")
-    if "waybar-config" in changed or "waybar-theme" in changed:
-        _run("pkill", "-SIGUSR2", "-x", "waybar")   # reloads both config and style
+    if "waybar-config" in changed and in_hyprland:
+        # waybar 0.9 rereads only its style on SIGUSR2, so position/height need a restart;
+        # it is launched through Hyprland so it outlives this process
+        _run("pkill", "-x", "waybar")
+        _run("hyprctl", "dispatch", "hl.dsp.exec_cmd(\"sleep 0.3; waybar\")")
+    elif "waybar-theme" in changed:
+        _run("pkill", "-SIGUSR2", "-x", "waybar")
     if "dunst" in changed:
         _run("dunstctl", "reload")
     if "kitty" in changed:
