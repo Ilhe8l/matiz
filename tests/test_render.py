@@ -54,7 +54,7 @@ class RenderTest(unittest.TestCase):
 
     def test_animation_speed_scales(self):
         lua = animations.to_lua("hyprdots", speed=2)
-        self.assertIn('leaf = "windows", enabled = true, speed = 12,', lua)
+        self.assertIn('leaf = "windows", enabled = true, speed = 7,', lua)
 
     def test_waybar_config_keeps_comment_and_other_keys(self):
         current = '// header\n{"position": "top", "height": 31, "modules-left": ["clock"]}\n'

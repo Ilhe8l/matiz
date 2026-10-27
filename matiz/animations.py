@@ -3,6 +3,8 @@
 PRESETS = {
     "hyprdots": {
         "name": "HyprDots",
+        # HyprDots ships windows at 6 and fade at 10 (0.6 s and 1 s), which makes every
+        # window feel slow to open; same curves, shorter durations
         "description": "Janelas deslizam com um leve quique; borda gira ao focar",
         "curves": {
             "wind": (0.05, 0.9, 0.1, 1.05),
@@ -12,18 +14,18 @@ PRESETS = {
             "popOut": (0.4, 0, 1, 0.6),
         },
         "animations": [
-            ("windows", 6, "wind", "slide"),
-            ("windowsIn", 6, "winIn", "slide"),
-            ("windowsOut", 5, "winOut", "slide"),
-            ("windowsMove", 5, "wind", "slide"),
+            ("windows", 3.5, "wind", "slide"),
+            ("windowsIn", 3.5, "winIn", "slide"),
+            ("windowsOut", 3, "winOut", "slide"),
+            ("windowsMove", 3.5, "wind", "slide"),
             ("border", 1, "liner", None),
             ("borderangle", 30, "liner", "once"),
-            ("fade", 10, "default", None),
-            ("workspaces", 5, "wind", None),
-            ("specialWorkspace", 5, "wind", "slidevert"),
-            ("layersIn", 3, "wind", "popin 88%"),
-            ("layersOut", 2, "popOut", "popin 92%"),
-            ("fadeLayersIn", 2, "default", None),
+            ("fade", 2.5, "default", None),
+            ("workspaces", 4, "wind", None),
+            ("specialWorkspace", 4, "wind", "slidevert"),
+            ("layersIn", 2.5, "wind", "popin 88%"),
+            ("layersOut", 1.5, "popOut", "popin 92%"),
+            ("fadeLayersIn", 1.5, "default", None),
             ("fadeLayersOut", 2, "default", None),
         ],
     },
